@@ -3,6 +3,8 @@
 One row per Banner, keeping only attribution fields and raw inputs to Signals. Flags that need
 the raw HTML are computed here (the HTML itself is dropped); everything else is derived in SQL later.
 
+Refuses to run on a file the File Gate blocked or never checked (scripts/file_gate.py).
+
 Usage: python scripts/extract_banners.py [max_banners]
 Writes data/processed/banners.parquet
 """
@@ -192,9 +194,19 @@ def to_row(r, scan_file):
     }
 
 
+def gate_decision(scan_file):
+    """The File Gate's verdict on this file (scripts/file_gate.py), or None if it was never gated."""
+    result = DATA_DIR / "gate" / f"{scan_file.split('.')[0]}.json"
+    return orjson.loads(result.read_bytes())["decision"] if result.exists() else None
+
+
 def main():
     limit = int(sys.argv[1]) if len(sys.argv) > 1 else None
     scan_file = DATASET_PATH.name
+    decision = gate_decision(scan_file)
+    if decision in (None, "BLOCK") and not os.environ.get("SKIP_FILE_GATE"):
+        sys.exit(f"{scan_file}: File Gate decision is {decision or 'missing'}; run scripts/file_gate.py check first "
+                 "(set SKIP_FILE_GATE=1 to override for experiments)")
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     writer = pq.ParquetWriter(OUT_PATH, SCHEMA, compression="zstd")
     buffer, n, bad, t0 = [], 0, 0, time.time()

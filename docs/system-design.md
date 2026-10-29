@@ -49,6 +49,11 @@ Key decisions: [ADR-0001](adr/0001-company-is-registrable-domain.md) (what a Com
   run on everything. A fixed-size random sample per file gives a guaranteed detection floor: with ~300 samples, a
   1% defect rate is caught with 95% confidence (P(miss) = 0.99^300 ≈ 5%), independent of file size. A failing
   BLOCK check stops the file's results reaching sellers; WARN checks ship with a recorded reason.
+  *As built:* `scripts/file_gate.py` (one streaming pass, also records the file's SHA-256 for the manifest; exit
+  code 2 on BLOCK, and `extract_banners.py` refuses ungated or blocked files). Drift is measured against the last
+  accepted file, which becomes the next baseline. `scripts/test_file_gate.py` gates eleven deliberately broken
+  copies of real data to show each check fires. Result on the real file: [file-gate-report.md](file-gate-report.md).
+  In production the gate would be fused into Parse to avoid a second pass over each file.
 - **④ Signals.** Rules, not an LLM (ADR-0002). Candidate Signals include KEV CVEs (and ransomware use), high-EPSS
   CVEs, end-of-life software, exposed Remote Desktop / databases / ICS / medical devices, expired or weak TLS,
   missing security headers, default/stale pages, and the `compromised` tag. The final list is chosen from profiling evidence.
