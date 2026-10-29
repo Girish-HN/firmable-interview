@@ -1,0 +1,6 @@
+# Packages the hosted app needs (Streamlit Community Cloud installs these).
+# The data pipeline in scripts/ also uses polars, zstandard, orjson, tldextract, anthropic and python-dotenv.
+streamlit==1.65.0
+duckdb==1.5.6
+pandas==2.3.3
+pyarrow==25.0.1

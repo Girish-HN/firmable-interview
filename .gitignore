@@ -1,4 +1,4 @@
-data/
+/data/
 .venv/
 *.parquet
 *.duckdb
@@ -8,3 +8,4 @@ __pycache__/
 learn/
 interview/
 TRACKER.md
+!app/data/*.parquet
