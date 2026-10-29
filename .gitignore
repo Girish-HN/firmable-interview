@@ -1,0 +1,10 @@
+data/
+.venv/
+*.parquet
+*.duckdb
+*.duckdb.wal
+__pycache__/
+.env
+learn/
+interview/
+TRACKER.md
