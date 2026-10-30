@@ -9,3 +9,4 @@ learn/
 interview/
 TRACKER.md
 !app/data/*.parquet
+.streamlit/secrets.toml

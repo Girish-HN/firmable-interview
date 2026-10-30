@@ -1,6 +1,6 @@
 # Security Leads: finding companies that need cybersecurity help, from internet scan data
 
-**App:** https://firmable-security-leads.streamlit.app/ (private; access is by email invitation, see [Data handling](#data-handling))
+**App:** https://firmable-security-leads.streamlit.app/ (protected by an access token shared with reviewers, see [Data handling](#data-handling))
 
 A sales tool for a cybersecurity vendor. It reads one day of Shodan internet-scan data (17.6 GB, 14.6 M service
 banners), works out which company each exposed server belongs to, and ranks companies by how much they need
@@ -146,12 +146,14 @@ python scripts/cascade.py              # v5: Sonnet 5.5 re-checks the top 300
 python scripts/score.py                # re-score with Fit
 python scripts/eval_golden.py          # Golden Set evaluation → docs/evaluation.md
 python scripts/export_app_data.py      # small tables for the app
-streamlit run app/streamlit_app.py
+streamlit run app/streamlit_app.py     # needs ACCESS_TOKEN = "..." in .streamlit/secrets.toml
 ```
 
 ## Data handling
 
 The app and its data name real organisations alongside their exposed services and exploitable CVEs. Although
-Shodan data is publicly collected, the aggregated list is a ready-made target list, so the repository and the
-app are private and shared by invitation. The raw scan file, the Golden Set labels and the LLM cache are not in
-the repository.
+Shodan data is publicly collected, the aggregated list is a ready-made target list. So the repository is
+private, and the app opens to a token prompt: nothing (no data, no page) renders until the shared access token is
+entered, and a deployment without the token configured shows nothing at all. The token lives in the host's
+secrets store and a git-ignored `.streamlit/secrets.toml`, never in the code; it is checked with a constant-time
+comparison. The raw scan file, the Golden Set labels and the LLM cache are not in the repository.

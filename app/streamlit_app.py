@@ -1,18 +1,57 @@
 """Security Leads: ranked Companies likely to need cybersecurity software, with the evidence behind each one.
 
 Reads the precomputed tables in app/data (scripts/export_app_data.py) and docs/evaluation.md; no LLM calls.
+Access needs the token in the ACCESS_TOKEN secret (Streamlit Cloud settings, or .streamlit/secrets.toml locally).
 Run locally: streamlit run app/streamlit_app.py
 """
+import hmac
 from pathlib import Path
 
 import duckdb
 import pandas as pd
 import streamlit as st
+from streamlit.errors import StreamlitSecretNotFoundError
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = Path(__file__).resolve().parent / "data"
 
 st.set_page_config(page_title="Security Leads", page_icon="🛡️", layout="wide")
+
+
+def require_token():
+    """Stop before any page or data renders unless this session entered the access token.
+
+    The data names real organisations next to exploitable flaws, so a missing secret fails closed.
+    """
+    try:
+        token = st.secrets.get("ACCESS_TOKEN", "")
+    except StreamlitSecretNotFoundError:  # no secrets file at all
+        token = ""
+    if not token:
+        st.error("Access token not configured: set ACCESS_TOKEN in the app's secrets.")
+        st.stop()
+    if st.session_state.get("authed"):
+        with st.sidebar:
+            if st.button("Log out"):
+                st.session_state.clear()
+                st.rerun()
+        return
+    _, middle, _ = st.columns([1, 2, 1])
+    with middle:
+        st.title("Security Leads")
+        st.write("Access is by token. Enter the one you were given.")
+        with st.form("login"):
+            entered = st.text_input("Access token", type="password")
+            submitted = st.form_submit_button("Open the app")
+        if submitted:
+            if hmac.compare_digest(entered.strip().encode(), token.encode()):  # constant-time comparison
+                st.session_state["authed"] = True
+                st.rerun()
+            st.error("Wrong token.")
+    st.stop()
+
+
+require_token()
 
 
 @st.cache_data
